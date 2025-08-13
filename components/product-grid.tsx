@@ -1080,12 +1080,35 @@ export function ProductGrid() {
 
                   <div className="aspect-square overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 rounded-t-lg">
                     <img
-                      src={product.image || "/placeholder.svg"}
+                      src={
+                        product.image && product.image.startsWith("data:image/")
+                          ? product.image
+                          : product.image ||
+                            `/placeholder.svg?height=300&width=300&query=${encodeURIComponent(product.name)}`
+                      }
                       alt={product.name}
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
-                        target.src = `/placeholder.svg?height=300&width=300&query=${encodeURIComponent(product.name)}`
+                        if (target.src.startsWith("data:image/")) {
+                          // If base64 image failed, try placeholder
+                          target.src = `/placeholder.svg?height=300&width=300&query=${encodeURIComponent(product.name)}`
+                        } else if (!target.src.includes("placeholder.svg")) {
+                          // If regular URL failed, try placeholder
+                          target.src = `/placeholder.svg?height=300&width=300&query=${encodeURIComponent(product.name)}`
+                        }
+                        // If placeholder also fails, show a simple gray background
+                        target.onerror = () => {
+                          target.style.display = "none"
+                          const parent = target.parentElement
+                          if (parent) {
+                            parent.innerHTML = `
+                              <div class="w-full h-full flex items-center justify-center bg-slate-200 text-slate-400">
+                                <span class="text-xs text-center px-2">Image not available</span>
+                              </div>
+                            `
+                          }
+                        }
                       }}
                     />
                   </div>
