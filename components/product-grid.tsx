@@ -1083,6 +1083,10 @@ export function ProductGrid() {
                       src={product.image || "/placeholder.svg"}
                       alt={product.name}
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = `/placeholder.svg?height=300&width=300&query=${encodeURIComponent(product.name)}`
+                      }}
                     />
                   </div>
 
