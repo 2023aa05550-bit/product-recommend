@@ -443,7 +443,15 @@ export function ProductGrid() {
     }
   }, [infiniteScrollEnabled, hasMoreProducts, productsLoading, loadMoreProducts])
 
-  // Fetch products when filters change (but only after initialization)
+  useEffect(() => {
+    if (!filtersInitialized) return
+
+    // Only fetch if we're not on page 1 (page 1 is handled by the filters useEffect)
+    if (pagination.currentPage > 1) {
+      fetchProducts(false)
+    }
+  }, [pagination.currentPage, fetchProducts, filtersInitialized])
+
   useEffect(() => {
     if (!filtersInitialized) return
 
