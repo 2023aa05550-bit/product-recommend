@@ -257,34 +257,46 @@ export function ProductGrid() {
         console.log("📦 Received recommendations from API:", data)
 
         if (data.recommendations && Array.isArray(data.recommendations)) {
-          setRecommendedProducts(data.recommendations)
-          console.log("✅ Using API recommendations:", data.recommendations.length)
+          const currentRecommendationIds = recommendedProducts
+            .map((p) => p.id)
+            .sort()
+            .join(",")
+          const newRecommendationIds = data.recommendations
+            .map((p: any) => p.id)
+            .sort()
+            .join(",")
+
+          if (currentRecommendationIds !== newRecommendationIds) {
+            console.log("✅ New recommendations detected, updating UI")
+            setRecommendedProducts(data.recommendations)
+          } else {
+            console.log("📋 Recommendations unchanged")
+          }
         } else {
           console.log("⚠️ API returned invalid format, showing empty state")
-          setRecommendedProducts([])
         }
       } else {
-        console.log("⚠️ API request failed, showing empty state")
-        setRecommendedProducts([])
+        console.log("⚠️ API request failed, keeping current state")
       }
     } catch (error) {
-      console.log("❌ API error, showing empty state:", error)
-      setRecommendedProducts([])
+      console.log("❌ API error, keeping current state:", error)
     } finally {
       setRecommendationsLoading(false)
     }
   }
 
   useEffect(() => {
-    if (sessionData.itemlist.length > 0 && products.length > 0) {
-      const timeoutId = setTimeout(() => {
-        // Send updated session data to webservice and fetch new recommendations
-        fetchRecommendationsFromBackend(sessionData.session_id)
-      }, 1000)
+    if (!sessionData.session_id) return
 
-      return () => clearTimeout(timeoutId)
-    }
-  }, [sessionData.itemlist.length, sessionData.session_id, products.length])
+    // Set up polling interval to check for new recommendations from web service
+    const pollInterval = setInterval(() => {
+      fetchRecommendationsFromBackend(sessionData.session_id)
+    }, 5000) // Poll every 5 seconds
+
+    return () => clearInterval(pollInterval)
+  }, [sessionData.session_id])
+
+  // Recommendations should only come from web service POST requests
 
   // Scroll to bottom of chat
   const scrollToBottom = () => {
